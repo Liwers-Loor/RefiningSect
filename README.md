@@ -121,6 +121,7 @@
 ## 项目文档
 
 - [开发路线图](docs/ROADMAP.md)
+- [玩法基础规则](docs/GAMEPLAY_FOUNDATIONS.md)
 - [模块架构](docs/MODULES.md)
 - [版本号管理规则](docs/VERSIONING.md)
 
