@@ -118,6 +118,11 @@
 - 定义第一段可玩流程及其验收标准。
 - 在规则稳定后搭建技术基础与首个垂直切片。
 
+## 项目文档
+
+- [开发路线图](docs/ROADMAP.md)
+- [版本号管理规则](docs/VERSIONING.md)
+
 ## 灵感来源
 
 游戏的阵法轮转与“机器逐渐运作起来”的表现思路，受到经典网页放置游戏 [The First Alkahistorian](https://elemental-inception-incremental.g8hh.com/Elements/Elements.html) 的启发。
