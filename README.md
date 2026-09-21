@@ -121,6 +121,7 @@
 ## 项目文档
 
 - [开发路线图](docs/ROADMAP.md)
+- [模块架构](docs/MODULES.md)
 - [版本号管理规则](docs/VERSIONING.md)
 
 ## 灵感来源
