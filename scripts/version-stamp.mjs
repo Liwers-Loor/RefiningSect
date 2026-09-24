@@ -3,9 +3,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { extname } from 'node:path';
 
 const level = process.argv[2];
-const indexes = { major: 0, module: 1, component: 2, feature: 3 };
+const indexes = { major: 0, module: 1, component: 2, feature: 3, refresh: -1 };
 if (!(level in indexes)) {
-  throw new Error('用法：pnpm version:stamp <major|module|component|feature>');
+  throw new Error('用法：pnpm version:stamp <major|module|component|feature|refresh>');
 }
 
 const versionFile = 'src/game/version.ts';
@@ -15,8 +15,10 @@ if (!match) throw new Error('找不到页面版本号');
 const previous = match[0];
 const parts = match.slice(1).map(Number);
 const index = indexes[level];
-parts[index] += 1;
-for (let i = index + 1; i < 4; i += 1) parts[i] = 0;
+if (index >= 0) {
+  parts[index] += 1;
+  for (let i = index + 1; i < 4; i += 1) parts[i] = 0;
+}
 
 const codeExtensions = new Set(['.ts', '.js', '.mjs', '.svelte', '.css', '.html']);
 const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'])

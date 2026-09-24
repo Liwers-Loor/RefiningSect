@@ -12,6 +12,15 @@ type LoadResult =
   | { status: 'new' | 'loaded'; state: GameState }
   | { status: 'invalid'; raw: string; reason: string };
 
+function migrateState(value: unknown): GameState | null {
+  if (isGameState(value)) return value;
+  if (typeof value !== 'object' || value === null) return null;
+  const previous = value as Record<string, unknown>;
+  if (previous.schemaVersion !== 1 || previous.locationId !== 'courtyard'
+    || !Number.isSafeInteger(previous.elapsedMs) || (previous.elapsedMs as number) < 0) return null;
+  return { ...createInitialState(), elapsedMs: previous.elapsedMs as number };
+}
+
 export function loadGame(storage: SaveStorage, nowMs: number): LoadResult {
   const raw = storage.getItem(SAVE_KEY);
   if (raw === null) return { status: 'new', state: createInitialState() };
@@ -22,14 +31,15 @@ export function loadGame(storage: SaveStorage, nowMs: number): LoadResult {
       throw new Error('存档不是对象');
     }
     const save = parsed as Record<string, unknown>;
-    if (!isGameState(save.state) || !Number.isSafeInteger(save.savedAtMs)) {
+    const state = migrateState(save.state);
+    if (!state || !Number.isSafeInteger(save.savedAtMs)) {
       throw new Error('结构版本或状态无效');
     }
     const savedAtMs = save.savedAtMs as number;
     if (savedAtMs < 0) throw new Error('保存时间无效');
     return {
       status: 'loaded',
-      state: advance(save.state, Math.max(0, nowMs - savedAtMs))
+      state: advance(state, Math.max(0, nowMs - savedAtMs))
     };
   } catch (error) {
     return {

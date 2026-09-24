@@ -18,7 +18,7 @@ describe('版本化存档', () => {
     saveGame(storage, createInitialState(), 1000);
     expect(loadGame(storage, 2500)).toEqual({
       status: 'loaded',
-      state: { ...createInitialState(), elapsedMs: 1500 }
+      state: { ...createInitialState(), elapsedMs: 1500, energyRecoveryMs: 1500 }
     });
   });
 
@@ -28,9 +28,31 @@ describe('版本化存档', () => {
     expect(loadGame(storage, 1000)).toMatchObject({ status: 'invalid', raw: '{bad' });
     expect(storage.getItem(SAVE_KEY)).toBe('{bad');
 
-    const unknown = JSON.stringify({ savedAtMs: 0, state: { ...createInitialState(), schemaVersion: 2 } });
+    const unknown = JSON.stringify({ savedAtMs: 0, state: { ...createInitialState(), schemaVersion: 3 } });
     storage.setItem(SAVE_KEY, unknown);
     expect(loadGame(storage, 1000)).toMatchObject({ status: 'invalid', raw: unknown });
     expect(storage.getItem(SAVE_KEY)).toBe(unknown);
+  });
+
+  it('从基础页面的结构版本 1 迁移，保留已累计的时间', () => {
+    const storage = memoryStorage();
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAtMs: 1000, state: { schemaVersion: 1, elapsedMs: 3000, locationId: 'courtyard' } }));
+    const loaded = loadGame(storage, 2000);
+    expect(loaded.status).toBe('loaded');
+    if (loaded.status === 'loaded') {
+      expect(loaded.state.elapsedMs).toBe(4000);
+      expect(loaded.state.items.some((item) => item.id === 'bucket:1')).toBe(true);
+    }
+  });
+
+  it('拒绝容量被篡改的存档且保留原文', () => {
+    const storage = memoryStorage();
+    const corrupt = JSON.stringify({
+      savedAtMs: 1000,
+      state: { ...createInitialState(), stacks: [{ id: 1, kind: 'earth', quantity: 101, ownerId: 'bag' }], nextStackId: 2 }
+    });
+    storage.setItem(SAVE_KEY, corrupt);
+    expect(loadGame(storage, 2000)).toMatchObject({ status: 'invalid', raw: corrupt });
+    expect(storage.getItem(SAVE_KEY)).toBe(corrupt);
   });
 });
