@@ -139,7 +139,7 @@ pnpm build         # 检查并构建页面
 
 首次安装浏览器测试环境时运行 `pnpm exec playwright install chromium`。当前页面面向桌面浏览器，移动端布局及移动平台文件导入导出不在首轮范围内。
 
-存档保存在当前浏览器的 `localStorage` 中，结构版本与页面版本分别管理。结构版本1的基础页面存档会迁移到当前版本；无法识别的存档不会被自动覆盖，页面会显示原始内容供复制备份。页面版本由 `pnpm version:stamp <major|module|component|feature>` 按 [版本号规则](docs/VERSIONING.md) 生成；同一未合并PR后续改动用 `pnpm version:stamp refresh` 只重新统计代码行数，不重复提升前四段。
+存档保存在当前浏览器的 `localStorage` 中，结构版本与页面版本分别管理。结构版本1的基础页面存档，以及早期缺少行动与任务字段且尚未开始操作的特定结构版本2存档，会迁移到当前格式并保留已累计时间；无法识别的存档不会被自动覆盖，页面会显示原始内容供复制备份。页面版本由 `pnpm version:stamp <major|module|component|feature>` 按 [版本号规则](docs/VERSIONING.md) 生成；同一未合并PR后续改动用 `pnpm version:stamp refresh` 只重新统计代码行数，不重复提升前四段。
 
 ## 项目文档
 

@@ -48,7 +48,12 @@ export function dispatch(state: GameState, command: GameCommand): GameState {
       requireCondition(state.locationId === 'courtyard', '纸阵需要在宅院桌上展开');
       requireCondition(state.items.some((item) => item.id === 'table' && item.ownerId === 'courtyard'), '需要一张可用的桌子');
       requireCondition(state.items.some((item) => item.id === 'paperArray' && item.ownerId === 'player'), '没有纸质炼器阵');
-      return { ...state, paperDeployed: true, items: state.items.map((item) => item.id === 'paperArray' ? { ...item, ownerId: 'courtyard' } : item) };
+      return {
+        ...state,
+        paperDeployed: true,
+        heldItemId: state.heldItemId === 'paperArray' ? null : state.heldItemId,
+        items: state.items.map((item) => item.id === 'paperArray' ? { ...item, ownerId: 'courtyard' } : item)
+      };
     }
     case 'hold': {
       requireCondition(state.items.some((item) => item.id === command.itemId && item.ownerId === 'player'), '物品不在身上');

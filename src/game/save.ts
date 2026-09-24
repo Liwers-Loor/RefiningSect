@@ -12,10 +12,27 @@ type LoadResult =
   | { status: 'new' | 'loaded'; state: GameState }
   | { status: 'invalid'; raw: string; reason: string };
 
+const EARLY_V2_KEYS = new Set([
+  'schemaVersion', 'elapsedMs', 'locationId', 'items', 'stacks',
+  'nextStackId', 'heldItemId', 'paperDeployed', 'playerEnergy'
+]);
+
 function migrateState(value: unknown): GameState | null {
   if (isGameState(value)) return value;
   if (typeof value !== 'object' || value === null) return null;
   const previous = value as Record<string, unknown>;
+  if (previous.schemaVersion === 2) {
+    const keys = Object.keys(previous);
+    if (keys.length !== EARLY_V2_KEYS.size || keys.some((key) => !EARLY_V2_KEYS.has(key))) return null;
+    const initial = createInitialState();
+    // 这份过渡格式没有任务与行动字段；只有未开始操作的存档能安全补齐。
+    if (previous.locationId !== 'courtyard' || previous.paperDeployed !== false
+      || previous.heldItemId !== null || previous.playerEnergy !== 100
+      || previous.nextStackId !== 1 || JSON.stringify(previous.stacks) !== '[]'
+      || JSON.stringify(previous.items) !== JSON.stringify(initial.items)) return null;
+    const migrated = { ...initial, ...previous };
+    return isGameState(migrated) ? migrated : null;
+  }
   if (previous.schemaVersion !== 1 || previous.locationId !== 'courtyard'
     || !Number.isSafeInteger(previous.elapsedMs) || (previous.elapsedMs as number) < 0) return null;
   return { ...createInitialState(), elapsedMs: previous.elapsedMs as number };

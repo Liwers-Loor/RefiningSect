@@ -45,6 +45,50 @@ describe('版本化存档', () => {
     }
   });
 
+  it('恢复早期不完整的结构版本 2 存档，保留已有物品、库存和时间', () => {
+    const storage = memoryStorage();
+    const initial = createInitialState();
+    const incomplete = {
+      schemaVersion: 2,
+      elapsedMs: 499154,
+      locationId: 'courtyard',
+      items: initial.items,
+      stacks: initial.stacks,
+      nextStackId: initial.nextStackId,
+      heldItemId: initial.heldItemId,
+      paperDeployed: initial.paperDeployed,
+      playerEnergy: initial.playerEnergy
+    };
+    storage.setItem(SAVE_KEY, JSON.stringify({ savedAtMs: 1790242123308, state: incomplete }));
+    const loaded = loadGame(storage, 1790242124308);
+    expect(loaded.status).toBe('loaded');
+    if (loaded.status === 'loaded') {
+      expect(loaded.state).toMatchObject({ elapsedMs: 500154, items: initial.items, stacks: [], playerEnergy: 100 });
+      saveGame(storage, loaded.state, 1790242124308);
+      expect(loadGame(storage, 1790242124308)).toEqual(loaded);
+    }
+  });
+
+  it('不把任意缺字段的结构版本 2 存档误判为早期格式', () => {
+    const storage = memoryStorage();
+    const { nextAuraId: _missing, ...broken } = createInitialState();
+    const raw = JSON.stringify({ savedAtMs: 1000, state: broken });
+    storage.setItem(SAVE_KEY, raw);
+    expect(loadGame(storage, 2000)).toMatchObject({ status: 'invalid', raw });
+
+    const initial = createInitialState();
+    const progressed = JSON.stringify({
+      savedAtMs: 1000,
+      state: {
+        schemaVersion: 2, elapsedMs: 499154, locationId: 'courtyard',
+        items: initial.items, stacks: [{ id: 1, kind: 'wood', quantity: 5, ownerId: 'woodStore' }],
+        nextStackId: 2, heldItemId: null, paperDeployed: false, playerEnergy: 100
+      }
+    });
+    storage.setItem(SAVE_KEY, progressed);
+    expect(loadGame(storage, 2000)).toMatchObject({ status: 'invalid', raw: progressed });
+  });
+
   it('拒绝容量被篡改的存档且保留原文', () => {
     const storage = memoryStorage();
     const corrupt = JSON.stringify({

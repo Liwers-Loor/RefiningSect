@@ -13,6 +13,33 @@ test('三栏页面启动并在刷新后延续存档时间', async ({ page }) => 
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('refining-sect.save') || '{}').state?.elapsedMs ?? 0)).toBeGreaterThanOrEqual(before);
 });
 
+test('刷新后恢复早期不完整的版本 2 存档', async ({ page }) => {
+  await page.goto('/');
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem('refining-sect.save') || '{}').state);
+  const raw = JSON.stringify({
+    savedAtMs: Date.now() - 1000,
+    state: {
+      schemaVersion: 2,
+      elapsedMs: 499154,
+      locationId: state.locationId,
+      items: state.items,
+      stacks: state.stacks,
+      nextStackId: state.nextStackId,
+      heldItemId: state.heldItemId,
+      paperDeployed: state.paperDeployed,
+      playerEnergy: state.playerEnergy
+    }
+  });
+  await page.addInitScript((save) => localStorage.setItem('refining-sect.save', save), raw);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '存档需要处理' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '筑器峰宅院' })).toBeVisible();
+  const recovered = await page.evaluate(() => JSON.parse(localStorage.getItem('refining-sect.save') || '{}').state);
+  expect(recovered.elapsedMs).toBeGreaterThanOrEqual(500154);
+  expect(recovered.items).toHaveLength(11);
+  expect(recovered.activeAction).toBeNull();
+});
+
 test('侧栏可收起，右侧栏目按按钮切换并在固定区域滚动', async ({ page }) => {
   await page.goto('/');
   const scene = page.getByRole('region', { name: '筑器峰宅院' });

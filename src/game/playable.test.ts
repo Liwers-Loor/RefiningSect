@@ -3,9 +3,16 @@ import { advance } from './advance';
 import { availableLocations, dispatch } from './actions';
 import { quantityAt } from './inventory';
 import { arrayGoldQi, auraQuantity, localAura, paperEarthToGold } from './resources';
-import { createInitialState } from './state';
+import { createInitialState, isGameState } from './state';
 
 describe('首个可玩闭环', () => {
+  it('手持纸阵时铺开后清除手持引用，状态仍可存档', () => {
+    const held = dispatch(createInitialState(), { type: 'hold', itemId: 'paperArray' });
+    const deployed = dispatch(held, { type: 'deployPaper' });
+    expect(deployed.heldItemId).toBeNull();
+    expect(isGameState(deployed)).toBe(true);
+  });
+
   it('从空仓采土、转化、赋能、储木、取水并手作第二只木桶', () => {
     let state = createInitialState();
     expect(availableLocations(state)).toEqual(['courtyard']);
